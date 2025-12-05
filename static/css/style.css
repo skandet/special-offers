@@ -27,6 +27,7 @@ header {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    text-align: center;
 }
 
 header h1 {
@@ -39,6 +40,7 @@ nav {
     display: flex;
     gap: 10px;
     margin-top: 15px;
+    justify-content: center;
 }
 
 .nav-btn {
@@ -63,10 +65,18 @@ main {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
 .actions {
     margin-bottom: 20px;
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .btn {
@@ -155,6 +165,7 @@ main {
     font-size: 1.2rem;
     margin-bottom: 8px;
     color: #2c3e50;
+    text-align: center;
 }
 
 .product-card p {
@@ -172,6 +183,7 @@ main {
     font-weight: bold;
     color: #e74c3c;
     margin: 10px 0;
+    text-align: center;
 }
 
 /* 模态框样式 */
@@ -266,10 +278,95 @@ main {
     min-height: 100px;
 }
 
+.form-group .help-text {
+    font-size: 0.8rem;
+    color: #95a5a6;
+    margin-top: 5px;
+}
+
+/* 商品订单信息样式 */
+.product-order-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.product-order-info h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.product-order-info p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* 数量输入样式 */
+.quantity-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-input input {
+    width: 80px;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.quantity-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+}
+
+.quantity-btn:active {
+    background-color: #d0d0d0;
+}
+
+/* 总价显示样式 */
+.total-price {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.total-price .price {
+    font-size: 1.5rem;
+    color: #e74c3c;
+}
+
 .form-actions {
     display: flex;
     gap: 10px;
-    justify-content: flex-end;
+    justify-content: center;
     margin-top: 20px;
 }
 
@@ -333,6 +430,7 @@ main {
     display: flex;
     gap: 5px;
     margin-top: 10px;
+    justify-content: center;
 }
 
 .product-actions .btn {

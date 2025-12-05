@@ -1,5 +1,7 @@
 // 全局变量
 let currentProduct = null;
+let products = [];
+let orders = [];
 
 // DOM元素
 const productsContainer = document.getElementById('products-container');
@@ -16,15 +18,46 @@ const closeSuccessBtn = document.getElementById('close-success');
 async function fetchProducts() {
     try {
         const response = await fetch('/api/products');
-        const products = await response.json();
+        if (!response.ok) {
+            throw new Error('获取商品失败');
+        }
+        products = await response.json();
         renderProducts(products);
     } catch (error) {
         console.error('获取商品失败:', error);
-        productsContainer.innerHTML = '<p style="text-align: center; color: #e74c3c;">获取商品失败，请稍后重试</p>';
+        if (productsContainer) {
+            productsContainer.innerHTML = '<p style="text-align: center; color: #e74c3c;">获取商品失败，请稍后重试</p>';
+        }
+    }
+}
+
+// 添加订单
+async function addOrder(orderData) {
+    try {
+        const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('添加订单失败');
+        }
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('添加订单失败:', error);
+        throw error;
     }
 }
 
 function renderProducts(products) {
+    // 检查productsContainer是否存在
+    if (!productsContainer) return;
+    
     if (products.length === 0) {
         productsContainer.innerHTML = '<p style="text-align: center; color: #95a5a6;">暂无商品</p>';
         return;
@@ -62,10 +95,32 @@ function showProductDetail(product) {
     productModal.style.display = 'block';
 }
 
+// 计算总价
+function calculateTotalPrice() {
+    const price = parseFloat(document.getElementById('order-product-price').value) || 0;
+    const quantity = parseInt(document.getElementById('order-quantity').value) || 1;
+    const total = price * quantity;
+    document.getElementById('total-price').textContent = `¥${total.toFixed(2)}`;
+}
+
 // 显示下单表单
 function showOrderForm() {
     if (currentProduct) {
+        // 设置商品基本信息
         document.getElementById('order-product-id').value = currentProduct.id;
+        document.getElementById('order-product-price').value = currentProduct.price;
+        
+        // 显示商品信息
+        document.getElementById('order-product-name').textContent = currentProduct.name;
+        document.getElementById('order-product-price-display').textContent = `单价：¥${currentProduct.price.toFixed(2)}`;
+        
+        // 初始化数量为1
+        document.getElementById('order-quantity').value = 1;
+        
+        // 计算初始总价
+        calculateTotalPrice();
+        
+        // 显示模态框
         orderModal.style.display = 'block';
         productModal.style.display = 'none';
     }
@@ -83,12 +138,14 @@ function closeModal(event) {
 async function handleOrderSubmit(event) {
     event.preventDefault();
     
-    const formData = new FormData(orderForm);
     const orderData = {
         product_id: parseInt(document.getElementById('order-product-id').value),
         user_name: document.getElementById('user-name').value,
         phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value
+        address: document.getElementById('address').value,
+        remark: document.getElementById('remark').value,
+        quantity: parseInt(document.getElementById('order-quantity').value) || 1,
+        total_price: parseFloat(document.getElementById('order-product-price').value) * (parseInt(document.getElementById('order-quantity').value) || 1)
     };
     
     // 简单验证
@@ -98,48 +155,80 @@ async function handleOrderSubmit(event) {
     }
     
     try {
-        const response = await fetch('/api/orders', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(orderData)
-        });
-        
-        if (response.ok) {
-            orderModal.style.display = 'none';
-            orderForm.reset();
-            successModal.style.display = 'block';
-        } else {
-            throw new Error('下单失败');
-        }
+        await addOrder(orderData);
+        orderModal.style.display = 'none';
+        orderForm.reset();
+        successModal.style.display = 'block';
     } catch (error) {
         console.error('下单失败:', error);
         alert('下单失败，请稍后重试');
     }
 }
 
-// 点击模态框外部关闭模态框
-window.onclick = function(event) {
-    if (event.target.classList.contains('modal')) {
-        event.target.style.display = 'none';
+// 页面加载时获取商品，并绑定事件监听器（仅在元素存在时）
+window.addEventListener('DOMContentLoaded', () => {
+    fetchProducts();
+    
+    // 只在元素存在时才添加事件监听器
+    if (orderBtn) {
+        orderBtn.addEventListener('click', showOrderForm);
     }
-}
-
-// 事件监听器
-orderBtn.addEventListener('click', showOrderForm);
-cancelOrderBtn.addEventListener('click', () => {
-    orderModal.style.display = 'none';
+    
+    if (cancelOrderBtn) {
+        cancelOrderBtn.addEventListener('click', () => {
+            orderModal.style.display = 'none';
+        });
+    }
+    
+    if (orderForm) {
+        orderForm.addEventListener('submit', handleOrderSubmit);
+    }
+    
+    if (closeSuccessBtn) {
+        closeSuccessBtn.addEventListener('click', () => {
+            successModal.style.display = 'none';
+        });
+    }
+    
+    // 关闭按钮事件
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+    
+    // 点击模态框外部关闭模态框
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    };
+    
+    // 添加数量增减事件监听器
+    const decreaseBtn = document.getElementById('decrease-quantity');
+    const increaseBtn = document.getElementById('increase-quantity');
+    const quantityInput = document.getElementById('order-quantity');
+    
+    if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value) || 1;
+            if (quantity > 1) {
+                quantityInput.value = quantity - 1;
+                calculateTotalPrice();
+            }
+        });
+    }
+    
+    if (increaseBtn) {
+        increaseBtn.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value) || 1;
+            quantityInput.value = quantity + 1;
+            calculateTotalPrice();
+        });
+    }
+    
+    if (quantityInput) {
+        quantityInput.addEventListener('input', calculateTotalPrice);
+    }
 });
-orderForm.addEventListener('submit', handleOrderSubmit);
-closeSuccessBtn.addEventListener('click', () => {
-    successModal.style.display = 'none';
-});
 
-// 关闭按钮事件
-closeButtons.forEach(btn => {
-    btn.addEventListener('click', closeModal);
-});
-
-// 页面加载时获取商品
-window.addEventListener('DOMContentLoaded', fetchProducts);
+// 暴露数据管理类到全局，方便在管理页面使用
+window.DataManager = DataManager;

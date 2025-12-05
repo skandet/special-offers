@@ -41,9 +41,13 @@ function switchTab(tabName) {
 }
 
 // 商品管理相关功能
-function fetchAdminProducts() {
+async function fetchAdminProducts() {
     try {
-        const products = DataManager.getProducts();
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+            throw new Error('获取商品失败');
+        }
+        const products = await response.json();
         renderAdminProducts(products);
     } catch (error) {
         console.error('获取商品失败:', error);
@@ -101,9 +105,13 @@ function showAddProductForm() {
 }
 
 // 编辑商品
-function editProduct(id) {
+async function editProduct(id) {
     try {
-        const products = DataManager.getProducts();
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+            throw new Error('获取商品失败');
+        }
+        const products = await response.json();
         const product = products.find(p => p.id === id);
         
         if (product) {
@@ -156,26 +164,23 @@ function editProduct(id) {
 }
 
 // 删除商品
-function deleteProduct(id) {
+async function deleteProduct(id) {
     if (confirm('确定要删除这个商品吗？')) {
         try {
-            DataManager.deleteProduct(id);
+            const response = await fetch(`/api/products/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error('删除商品失败');
+            }
+            
             fetchAdminProducts();
         } catch (error) {
             console.error('删除商品失败:', error);
             alert('删除商品失败，请稍后重试');
         }
     }
-}
-
-// 将图片文件转换为base64格式
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
 }
 
 // 处理商品表单提交
@@ -195,30 +200,32 @@ async function handleProductSubmit(event) {
     if (!productNameEl || !productDescEl || !productPriceEl || !productImageEl) return;
     
     try {
-        let productImage;
+        const formData = new FormData();
+        formData.append('name', productNameEl.value);
+        formData.append('description', productDescEl.value);
+        formData.append('price', productPriceEl.value);
+        
         if (productImageEl.files && productImageEl.files[0]) {
-            // 如果有新文件上传，转换为base64
-            productImage = await fileToBase64(productImageEl.files[0]);
-        } else {
-            // 否则使用现有的图片URL
-            productImage = productImageEl.value;
+            formData.append('image', productImageEl.files[0]);
         }
         
-        const productData = {
-            name: productNameEl.value,
-            description: productDescEl.value,
-            price: parseFloat(productPriceEl.value),
-            image: productImage,
-            is_active: true
-        };
-        
+        let response;
         if (productId) {
             // 编辑商品
-            productData.id = productId;
-            DataManager.updateProduct(productData);
+            response = await fetch(`/api/products/${productId}`, {
+                method: 'PUT',
+                body: formData
+            });
         } else {
             // 添加商品
-            DataManager.addProduct(productData);
+            response = await fetch('/api/products', {
+                method: 'POST',
+                body: formData
+            });
+        }
+        
+        if (!response.ok) {
+            throw new Error(productId ? '更新商品失败' : '添加商品失败');
         }
         
         const productFormModalEl = document.getElementById('product-form-modal');
@@ -232,9 +239,13 @@ async function handleProductSubmit(event) {
 }
 
 // 订单管理相关功能
-function fetchOrders() {
+async function fetchOrders() {
     try {
-        const orders = DataManager.getOrders();
+        const response = await fetch('/api/orders');
+        if (!response.ok) {
+            throw new Error('获取订单失败');
+        }
+        const orders = await response.json();
         renderOrders(orders);
     } catch (error) {
         console.error('获取订单失败:', error);
@@ -254,20 +265,13 @@ function renderOrders(orders) {
         return;
     }
     
-    // 获取商品信息，用于显示订单对应的商品名称
-    const products = DataManager.getProducts();
-    const productMap = {};
-    products.forEach(p => {
-        productMap[p.id] = p.name;
-    });
-    
     ordersListEl.innerHTML = orders
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // 按时间倒序
         .map(order => `
         <div class="order-item">
             <div class="order-header">
                 <span>订单 #${order.id}</span>
-                <span class="order-product">${productMap[order.product_id] || '未知商品'}</span>
+                <span class="order-product">${order.product_name || '未知商品'}</span>
             </div>
             <div class="order-info">
                 <p><strong>姓名:</strong> ${order.user_name}</p>

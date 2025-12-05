@@ -14,73 +14,44 @@ const cancelOrderBtn = document.getElementById('cancel-order');
 const orderForm = document.getElementById('order-form');
 const closeSuccessBtn = document.getElementById('close-success');
 
-// 数据管理类
-class DataManager {
-    static getProducts() {
-        const stored = localStorage.getItem('products');
-        return stored ? JSON.parse(stored) : [];
-    }
-    
-    static saveProducts(newProducts) {
-        localStorage.setItem('products', JSON.stringify(newProducts));
-    }
-    
-    static addProduct(product) {
-        const products = this.getProducts();
-        const newProduct = {
-            ...product,
-            id: Date.now(),
-            is_active: true
-        };
-        products.push(newProduct);
-        this.saveProducts(products);
-        return newProduct;
-    }
-    
-    static updateProduct(updatedProduct) {
-        const products = this.getProducts();
-        const index = products.findIndex(p => p.id === updatedProduct.id);
-        if (index !== -1) {
-            products[index] = updatedProduct;
-            this.saveProducts(products);
-            return true;
+// 商品数据获取和渲染
+async function fetchProducts() {
+    try {
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+            throw new Error('获取商品失败');
         }
-        return false;
-    }
-    
-    static deleteProduct(id) {
-        const products = this.getProducts();
-        const filtered = products.filter(p => p.id !== id);
-        this.saveProducts(filtered);
-        return true;
-    }
-    
-    static getOrders() {
-        const stored = localStorage.getItem('orders');
-        return stored ? JSON.parse(stored) : [];
-    }
-    
-    static saveOrders(newOrders) {
-        localStorage.setItem('orders', JSON.stringify(newOrders));
-    }
-    
-    static addOrder(order) {
-        const orders = this.getOrders();
-        const newOrder = {
-            ...order,
-            id: Date.now(),
-            created_at: new Date().toISOString()
-        };
-        orders.push(newOrder);
-        this.saveOrders(orders);
-        return newOrder;
+        products = await response.json();
+        renderProducts(products);
+    } catch (error) {
+        console.error('获取商品失败:', error);
+        if (productsContainer) {
+            productsContainer.innerHTML = '<p style="text-align: center; color: #e74c3c;">获取商品失败，请稍后重试</p>';
+        }
     }
 }
 
-// 商品数据获取和渲染
-function fetchProducts() {
-    products = DataManager.getProducts();
-    renderProducts(products);
+// 添加订单
+async function addOrder(orderData) {
+    try {
+        const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('添加订单失败');
+        }
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('添加订单失败:', error);
+        throw error;
+    }
 }
 
 function renderProducts(products) {
@@ -164,7 +135,7 @@ function closeModal(event) {
 }
 
 // 处理订单提交
-function handleOrderSubmit(event) {
+async function handleOrderSubmit(event) {
     event.preventDefault();
     
     const orderData = {
@@ -184,7 +155,7 @@ function handleOrderSubmit(event) {
     }
     
     try {
-        DataManager.addOrder(orderData);
+        await addOrder(orderData);
         orderModal.style.display = 'none';
         orderForm.reset();
         successModal.style.display = 'block';

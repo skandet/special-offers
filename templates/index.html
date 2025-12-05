@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日特价商品</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>今日特价商品</h1>
+            <p>扫码查看每日新鲜特价商品</p>
+        </header>
+        
+        <main>
+            <div id="products-container" class="products-grid"></div>
+        </main>
+    </div>
+    
+    <!-- 商品详情模态框 -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="product-detail">
+                <img id="modal-image" src="" alt="商品图片">
+                <div class="product-info">
+                    <h2 id="modal-name"></h2>
+                    <p id="modal-description"></p>
+                    <p class="price" id="modal-price"></p>
+                    <button id="order-btn" class="btn btn-primary">立即下单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 下单表单模态框 -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>填写订单信息</h2>
+            <form id="order-form">
+                <input type="hidden" id="order-product-id">
+                <div class="form-group">
+                    <label for="user-name">姓名 *</label>
+                    <input type="text" id="user-name" name="user_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">手机号 *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">收货地址 *</label>
+                    <textarea id="address" name="address" rows="4" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-order" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">提交订单</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 订单成功提示 -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <h2>订单提交成功！</h2>
+            <p>我们将尽快为您配货，感谢您的购买！</p>
+            <button id="close-success" class="btn btn-primary">确定</button>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
